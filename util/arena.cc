@@ -21,23 +21,24 @@ Arena::~Arena() {
 }
 
 char* Arena::AllocateFallback(size_t bytes) {
-  if (bytes > kBlockSize / 4) {
+  if (bytes > kBlockSize / 4) { // 如果所需的空间大于块的1/4 
     // Object is more than a quarter of our block size.  Allocate it separately
     // to avoid wasting too much space in leftover bytes.
-    char* result = AllocateNewBlock(bytes);
+    char* result = AllocateNewBlock(bytes); // 直接申请一个 bytes 大小的块
     return result;
   }
-
+    //否则，申请一个kBlockSize的块，原来块的剩余空间就被浪费了
   // We waste the remaining space in the current block.
   alloc_ptr_ = AllocateNewBlock(kBlockSize);
   alloc_bytes_remaining_ = kBlockSize;
 
-  char* result = alloc_ptr_;
+  char* result = alloc_ptr_;  //申请完了进行分配
   alloc_ptr_ += bytes;
   alloc_bytes_remaining_ -= bytes;
   return result;
 }
-
+// 内存对齐的收集函数 AllocateAligned
+// 这个函数首先计算一下为了能对其内存，要多收集多少字节的内存空间，然后再进行空间收集
 char* Arena::AllocateAligned(size_t bytes) {
   const int align = (sizeof(void*) > 8) ? sizeof(void*) : 8;
   assert((align & (align-1)) == 0);   // Pointer size should be a power of 2

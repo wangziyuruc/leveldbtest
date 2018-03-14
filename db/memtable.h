@@ -37,7 +37,7 @@ class MemTable {
 
   // Returns an estimate of the number of bytes of data in use by this
   // data structure. It is safe to call when MemTable is being modified.
-  size_t ApproximateMemoryUsage();
+  size_t ApproximateMemoryUsage(); // 返回memtable的非精确内存使用量
 
   // Return an iterator that yields the contents of the memtable.
   //
@@ -45,7 +45,7 @@ class MemTable {
   // while the returned iterator is live.  The keys returned by this
   // iterator are internal keys encoded by AppendInternalKey in the
   // db/format.{h,cc} module.
-  Iterator* NewIterator();
+  Iterator* NewIterator(); //  返回 Memtable 的迭代器，用来进行顺序访问以及 seek 操作
 
   // Add an entry into memtable that maps key to value at the
   // specified sequence number and with the specified type.

@@ -42,15 +42,15 @@ namespace {
 struct LRUHandle {
   void* value;
   void (*deleter)(const Slice&, void* value);
-  LRUHandle* next_hash;
-  LRUHandle* next;
-  LRUHandle* prev;
-  size_t charge;      // TODO(opt): Only allow uint32_t?
-  size_t key_length;
-  bool in_cache;      // Whether entry is in the cache.
-  uint32_t refs;      // References, including cache reference, if present.
-  uint32_t hash;      // Hash of key(); used for fast sharding and comparisons
-  char key_data[1];   // Beginning of key
+  LRUHandle* next_hash;  // Hash 表指针，同样 Hash 值的 Handler 串接起来
+  LRUHandle* next; // LRU 双向链表指针
+  LRUHandle* prev;  // LRU 双向链表指针
+  size_t charge;      // TODO(opt): Only allow uint32_t? // 占用的空间
+  size_t key_length; // key 的长度
+  bool in_cache;      // Whether entry is in the cache. // 该 Handle 是否在 cache 中
+  uint32_t refs;      // References, including cache reference, if present. / 该 Handle 被引用到的次数，用于管理回收.
+  uint32_t hash;      // Hash of key(); used for fast sharding and comparisons // Hash of key
+  char key_data[1];   // Beginning of key // key 数据
 
   Slice key() const {
     // For cheaper lookups, we allow a temporary Handle object
@@ -78,15 +78,21 @@ class HandleTable {
   }
 
   LRUHandle* Insert(LRUHandle* h) {
-    LRUHandle** ptr = FindPointer(h->key(), h->hash);
+    LRUHandle** ptr = FindPointer(h->key(), h->hash); //调用 FindPointer 找到当前 key 和 hash 值所对应的那个 LRUHandle 的指针
     LRUHandle* old = *ptr;
+    //判断返回的 ptr 是否是 NULL，如果是，表明表中没有当前的 key，那么直接插入到尾部，并调用 Resize()，
+    //否则从 Hash 表中删除原来的指针 ptr 指向的节点，也就是用新节点替换旧节点
     h->next_hash = (old == NULL ? NULL : old->next_hash);
-    *ptr = h;
+     // 如果存在相同的key，那么删除old
+    *ptr = h;  // 与 *ptr->next_hash = h 的区别
     if (old == NULL) {
       ++elems_;
       if (elems_ > length_) {
         // Since each cache entry is fairly large, we aim for a small
         // average linked list length (<= 1).
+        //Resize() 的作用是调整 Hash 表，使得每一个 slot 中的期望 Handle 的数量为1. 该函数首先将 LRUHandler** list_ 扩张成为 new_length，
+        //其中 new_length 是第一个大于 elem_ 的 2 的幂次，
+        //这主要是为了加速根据 hash 值选择 slot 的计算（因为 hash%new_length = hash & (new_length-1) ）。
         Resize();
       }
     }
@@ -179,22 +185,22 @@ class LRUCache {
   bool FinishErase(LRUHandle* e);
 
   // Initialized before use.
-  size_t capacity_;
+  size_t capacity_; //// lru 链表的容量
 
   // mutex_ protects the following state.
-  mutable port::Mutex mutex_;
+  mutable port::Mutex mutex_; //  // 修改LRUCache时的并发保护
   size_t usage_;
 
   // Dummy head of LRU list.
   // lru.prev is newest entry, lru.next is oldest entry.
   // Entries have refs==1 and in_cache==true.
-  LRUHandle lru_;
+  LRUHandle lru_; // // 双向循环链表，按照 LRU 原则组织
 
   // Dummy head of in-use list.
   // Entries are in use by clients, and have refs >= 2 and in_cache==true.
-  LRUHandle in_use_;
+  LRUHandle in_use_; // 双向循环链表，当前正在被使用的节点
 
-  HandleTable table_;
+  HandleTable table_; // hash 表
 };
 
 LRUCache::LRUCache()
@@ -270,7 +276,7 @@ Cache::Handle* LRUCache::Insert(
     const Slice& key, uint32_t hash, void* value, size_t charge,
     void (*deleter)(const Slice& key, void* value)) {
   MutexLock l(&mutex_);
-
+  // 创建LRUHandle 
   LRUHandle* e = reinterpret_cast<LRUHandle*>(
       malloc(sizeof(LRUHandle)-1 + key.size()));
   e->value = value;
@@ -281,7 +287,7 @@ Cache::Handle* LRUCache::Insert(
   e->in_cache = false;
   e->refs = 1;  // for the returned handle.
   memcpy(e->key_data, key.data(), key.size());
-
+  // 将Lruhandle链接到in_use表头 refs++ 
   if (capacity_ > 0) {
     e->refs++;  // for the cache's reference.
     e->in_cache = true;
@@ -289,7 +295,8 @@ Cache::Handle* LRUCache::Insert(
     usage_ += charge;
     FinishErase(table_.Insert(e));
   } // else don't cache.  (Tests use capacity_==0 to turn off caching.)
-
+  //之后，该函数检测当前所有 cache 的条目所占的空间是否超过上限，
+  //如果超过上限，那么从 lru_ 链表中读取到最近未使用过的 Handle，并将其从 HashTable 和 lru_ 链表中删除来释放 LRUCache 的空间
   while (usage_ > capacity_ && lru_.next != &lru_) {
     LRUHandle* old = lru_.next;
     assert(old->refs == 1);
@@ -334,6 +341,11 @@ void LRUCache::Prune() {
 
 static const int kNumShardBits = 4;
 static const int kNumShards = 1 << kNumShardBits;
+// /ShardedLRUCache 中定义了 16 个 LRUCache。每次进行插入或者查找时，
+//首先使用 hash 值的最高 4 位来确定当前应该在哪个 LRUCache 中查找，
+//然后在到对应的 LRUCache 中执行相关的操作。使用这种方式最重要的原因就是 LRUCache 的查找，
+//插入和释放需要加锁，同时使用 16 个 LRUCache 能够提高对于 Cache 访问的并发，也就是从侧面降低了锁的粒度，提高访问效率。
+
 
 class ShardedLRUCache : public Cache {
  private:

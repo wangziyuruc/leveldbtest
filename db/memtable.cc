@@ -87,28 +87,28 @@ void MemTable::Add(SequenceNumber s, ValueType type,
   //  key bytes    : char[internal_key.size()]
   //  value_size   : varint32 of value.size()
   //  value bytes  : char[value.size()]
-  size_t key_size = key.size();
+  size_t key_size = key.size(); //user_key
   size_t val_size = value.size();
-  size_t internal_key_size = key_size + 8;
+  size_t internal_key_size = key_size + 8; /// 计算 InternalKey长度
   const size_t encoded_len =
       VarintLength(internal_key_size) + internal_key_size +
       VarintLength(val_size) + val_size;
-  char* buf = arena_.Allocate(encoded_len);
-  char* p = EncodeVarint32(buf, internal_key_size);
+  char* buf = arena_.Allocate(encoded_len); //// 申请内存
+  char* p = EncodeVarint32(buf, internal_key_size);  // 将InternalKey长度编码
   memcpy(p, key.data(), key_size);
   p += key_size;
-  EncodeFixed64(p, (s << 8) | type);
+  EncodeFixed64(p, (s << 8) | type);//// 填充SequenceNumber 和 Type
   p += 8;
-  p = EncodeVarint32(p, val_size);
-  memcpy(p, value.data(), val_size);
+  p = EncodeVarint32(p, val_size);  // 将 value 长度进行编码
+  memcpy(p, value.data(), val_size); // 保存 value 值
   assert((p + val_size) - buf == encoded_len);
-  table_.Insert(buf);
+  table_.Insert(buf); // 插入到跳表中
 }
 
 bool MemTable::Get(const LookupKey& key, std::string* value, Status* s) {
   Slice memkey = key.memtable_key();
   Table::Iterator iter(&table_);
-  iter.Seek(memkey.data());
+  iter.Seek(memkey.data());// 初始化迭代器 Iterator 并调用 Seek，直接定位到第一个大于或等于 memtable_key 的条目 
   if (iter.Valid()) {
     // entry format is:
     //    klength  varint32
@@ -119,9 +119,11 @@ bool MemTable::Get(const LookupKey& key, std::string* value, Status* s) {
     // Check that it belongs to same user key.  We do not check the
     // sequence number since the Seek() call above should have skipped
     // all entries with overly large sequence numbers.
-    const char* entry = iter.key();
+    const char* entry = iter.key();  // 当前条目对应的 LookupKey
     uint32_t key_length;
-    const char* key_ptr = GetVarint32Ptr(entry, entry+5, &key_length);
+    // 解析 InternalKey 的长度到 key_length
+    const char* key_ptr = GetVarint32Ptr(entry, entry+5, &key_length); 
+    // 比较当前条目对应的 user_key 与 参数 key 是否相等
     if (comparator_.comparator.user_comparator()->Compare(
             Slice(key_ptr, key_length - 8),
             key.user_key()) == 0) {

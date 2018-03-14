@@ -338,15 +338,16 @@ void SkipList<Key,Comparator>::Insert(const Key& key) {
   // TODO(opt): We can use a barrier-free variant of FindGreaterOrEqual()
   // here since Insert() is externally synchronized.
   Node* prev[kMaxHeight];
+   // 寻找到插入位置，prev 数组会被填充为该节点在不同层次上的前置节点
   Node* x = FindGreaterOrEqual(key, prev);
-
+    // 不允许出现相同的键值
   // Our data structure does not allow duplicate insertion
   assert(x == NULL || !Equal(key, x->key));
 
-  int height = RandomHeight();
+  int height = RandomHeight();  // 随机计算该节点的高度
   if (height > GetMaxHeight()) {
     for (int i = GetMaxHeight(); i < height; i++) {
-      prev[i] = head_;
+      prev[i] = head_; // 设置该节点在新层数上的前置节点为表头
     }
     //fprintf(stderr, "Change height from %d to %d\n", max_height_, height);
 
@@ -361,11 +362,11 @@ void SkipList<Key,Comparator>::Insert(const Key& key) {
   }
 
   x = NewNode(key, height);
-  for (int i = 0; i < height; i++) {
+  for (int i = 0; i < height; i++) { // 将该节点串接到所有的链表中
     // NoBarrier_SetNext() suffices since we will add a barrier when
     // we publish a pointer to "x" in prev[i].
     x->NoBarrier_SetNext(i, prev[i]->NoBarrier_Next(i));
-    prev[i]->SetNext(i, x);
+    prev[i]->SetNext(i, x); 
   }
 }
 

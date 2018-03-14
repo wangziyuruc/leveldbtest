@@ -35,14 +35,14 @@ class Arena {
   char* AllocateNewBlock(size_t block_bytes);
 
   // Allocation state
-  char* alloc_ptr_;
-  size_t alloc_bytes_remaining_;
+  char* alloc_ptr_;  // 指向当前 block 内还未使用的起始地址
+  size_t alloc_bytes_remaining_; // 当前的 block 里还有多少字节可以使用
 
   // Array of new[] allocated memory blocks
-  std::vector<char*> blocks_;
+  std::vector<char*> blocks_; // 已经申请了的所有的内存块
 
   // Total memory usage of the arena.
-  port::AtomicPointer memory_usage_;
+  port::AtomicPointer memory_usage_; // 总的内存使用量统计
 
   // No copying allowed
   Arena(const Arena&);
@@ -54,13 +54,13 @@ inline char* Arena::Allocate(size_t bytes) {
   // 0-byte allocations, so we disallow them here (we don't need
   // them for our internal use).
   assert(bytes > 0);
-  if (bytes <= alloc_bytes_remaining_) {
+  if (bytes <= alloc_bytes_remaining_) {  // Fast path当前块能装得下这么多bytes
     char* result = alloc_ptr_;
-    alloc_ptr_ += bytes;
-    alloc_bytes_remaining_ -= bytes;
+    alloc_ptr_ += bytes; // 从当前块中分配
+    alloc_bytes_remaining_ -= bytes; // 计算当前块的剩余字节数
     return result;
   }
-  return AllocateFallback(bytes);
+  return AllocateFallback(bytes); //Slow path
 }
 
 }  // namespace leveldb
