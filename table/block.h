@@ -22,15 +22,16 @@ class Block {
   ~Block();
 
   size_t size() const { return size_; }
+  // 通过Iterator对象，调用者就可以遍历访问Block的存储的k/v对了
   Iterator* NewIterator(const Comparator* comparator);
 
  private:
   uint32_t NumRestarts() const;
 
-  const char* data_;
-  size_t size_;
-  uint32_t restart_offset_;     // Offset in data_ of restart array
-  bool owned_;                  // Block owns data_[]
+  const char* data_; // block数据指针 
+  size_t size_;  // block数据大小
+  uint32_t restart_offset_;     // Offset in data_ of restart array 重启点数组在data_中的偏移  
+  bool owned_;                  // Block owns data_[] data_[]是否是Block拥有的
 
   // No copying allowed
   Block(const Block&);

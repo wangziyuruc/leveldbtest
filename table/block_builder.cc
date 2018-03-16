@@ -45,7 +45,7 @@ BlockBuilder::BlockBuilder(const Options* options)
   restarts_.push_back(0);       // First restart point is at offset 0
 }
 
-void BlockBuilder::Reset() {
+void BlockBuilder::Reset() { //清空各个信息
   buffer_.clear();
   restarts_.clear();
   restarts_.push_back(0);       // First restart point is at offset 0
@@ -88,19 +88,20 @@ void BlockBuilder::Add(const Slice& key, const Slice& value) {
     restarts_.push_back(buffer_.size());
     counter_ = 0;
   }
-  const size_t non_shared = key.size() - shared;
+  const size_t non_shared = key.size() - shared; // // key前缀之后的字符串长度
 
   // Add "<shared><non_shared><value_size>" to buffer_
   PutVarint32(&buffer_, shared);
   PutVarint32(&buffer_, non_shared);
   PutVarint32(&buffer_, value.size());
 
-  // Add string delta to buffer_ followed by value
+  // Add string delta to buffer_ followed by value // 其后是前缀之后的字符串 + value 
   buffer_.append(key.data() + shared, non_shared);
   buffer_.append(value.data(), value.size());
 
+  // 更新状态 ，last_key_ = key及计数器counter_ 
   // Update state
-  last_key_.resize(shared);
+  last_key_.resize(shared);  // 连一个string的赋值都要照顾到，使内存copy最小化 
   last_key_.append(key.data() + shared, non_shared);
   assert(Slice(last_key_) == key);
   counter_++;

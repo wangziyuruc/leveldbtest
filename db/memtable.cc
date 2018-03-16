@@ -102,7 +102,7 @@ void MemTable::Add(SequenceNumber s, ValueType type,
   p = EncodeVarint32(p, val_size);  // 将 value 长度进行编码
   memcpy(p, value.data(), val_size); // 保存 value 值
   assert((p + val_size) - buf == encoded_len);
-  table_.Insert(buf); // 插入到跳表中
+  table_.Insert(buf); // 插入到跳表中 buff varint
 }
 
 bool MemTable::Get(const LookupKey& key, std::string* value, Status* s) {
