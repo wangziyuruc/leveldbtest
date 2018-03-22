@@ -538,6 +538,8 @@ Status Version::BufferGet(const ReadOptions& options,
                 case kNotFound:
                     continue;      // Keep searching in other files
                 case kFound:
+                    f->read_size++;
+                    cout<<"read size:"<<f->read_size<<endl;
                     return s;
                 case kDeleted:
                     s = Status::NotFound(Slice());  // Use empty error message for speed
@@ -561,6 +563,8 @@ Status Version::BufferGet(const ReadOptions& options,
         case kNotFound:
           break;      // Keep searching in other files
         case kFound:
+          f->read_size++;
+          cout<<"read size:"<< f->read_size<<endl;
           return s;
         case kDeleted:
           s = Status::NotFound(Slice());  // Use empty error message for speed

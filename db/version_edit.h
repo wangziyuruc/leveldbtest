@@ -25,8 +25,8 @@ struct FileMetaData {
   InternalKey smallest;       // Smallest internal key served by table
   InternalKey largest;        // Largest internal key served by table
   Buffer* buffer;               //whc add
-
-  FileMetaData() : refs(0), allowed_seeks(1 << 30), file_size(0),buffer(NULL) { }
+  int read_size;          // wzy add
+  FileMetaData() : refs(0), allowed_seeks(1 << 30), file_size(0),buffer(NULL),read_size(0) { }
   
   //~FileMetaData(){delete buffer;}
 };
@@ -45,7 +45,7 @@ struct BufferNode{
 	uint64_t number;
 	uint64_t size;
 	uint64_t sequence;
-    uint64_t filesize;
+  uint64_t filesize;
 
 	BufferNode(InternalKey& s,InternalKey& l,uint64_t n,uint64_t si,uint64_t se,uint64_t fs):smallest(s),
 			largest(l),
