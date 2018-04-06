@@ -985,19 +985,43 @@ void DBImpl::BackgroundCompaction() {
    // status = DoCompactionWork(compact);
    //whc change
   //if(compact->compaction->level_== config::kBufferCompactLevel){
-  if(BCJudge::IsBufferCompactLevel(compact->compaction->level_)){
-      //mutex_.Unlock();
-      //CopyToSSD(compact);
-      //mutex_.Lock();
-	  //std::cout<<"Have copied to SSD"<<std::endl;
-	  status = Dispatch(compact);
-  } else status = DoCompactionWork(compact);
-    if (!status.ok()) {
-      RecordBackgroundError(status);
+  std::cout<<"compaction level: "<<compact->compaction->level_<<std::endl;
+  if (compact->compaction->level_ == 0)
+  { // wzy add
+    Version *current = versions_->current();
+    std::vector<FileMetaData *> levelFile = current->files_[0];
+    std::cout << "0 level file size: " << levelFile.size() << std::endl;
+
+    for (int i = 0; i < levelFile.size(); i++)
+    {
+      std::cout << "read size: " << levelFile[i]->read_size << std::endl;
+      // if (levelFile[i]->read_size >= 488)
+      // {
+      //   status = Dispatch(compact);
+      //   break;
+      // }
     }
-    CleanupCompaction(compact);
-    c->ReleaseInputs();
-    DeleteObsoleteFiles();
+  }
+  if (BCJudge::IsBufferCompactLevel(compact->compaction->level_))
+  {
+    //mutex_.Unlock();
+    //CopyToSSD(compact);
+    //mutex_.Lock();
+    //std::cout<<"Have copied to SSD"<<std::endl;
+    status = Dispatch(compact);
+  }
+  else
+  {
+    status = DoCompactionWork(compact);
+  }
+
+  if (!status.ok())
+  {
+    RecordBackgroundError(status);
+  }
+  CleanupCompaction(compact);
+  c->ReleaseInputs();
+  DeleteObsoleteFiles();
   }
   delete c;
 
@@ -1821,7 +1845,7 @@ Status DBImpl::Get(const ReadOptions& options,
     // First look in the memtable, then in the immutable memtable (if any).
     LookupKey lkey(key, snapshot);
     if (mem->Get(lkey, value, &s)) {
-      std::cout<<mem->read_size<<std::endl;
+      //std::cout<<mem->read_size<<std::endl;
       // Done
     } else if (imm != NULL && imm->Get(lkey, value, &s)) {
       // Done

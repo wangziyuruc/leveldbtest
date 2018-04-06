@@ -48,9 +48,18 @@ static const int kBufferCompactLevel  = 10;
 //whc add
 static const int kThresholdBufferNum  = 5;
 
+//wzy add 
+static const int kSingleBufferCompactLevel = 0;
+
 
 }  // namespace config
-
+// wzy add
+class SigleBCJudge{
+  public:
+  static bool IsSigleBufferCompactLevel(int level){
+    return (level==config::kSingleBufferCompactLevel);
+  }
+};
 
 //whc add
 class BCJudge{

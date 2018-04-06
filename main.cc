@@ -31,12 +31,12 @@ int main() {
     string res1;    
     while(readNum1<10){
         status = db->Get(ReadOptions(), "1", &res1);
-        std::cout<<readNum1<<std::endl;
+        //std::cout<<readNum1<<std::endl;
         readNum1++;
     }
 
 
-    while(n < 100000){
+    while(n < 1000000){
         string s = "";
         int2str(i,s);
         //cout<<s<<endl;
@@ -54,18 +54,18 @@ int main() {
         readNum++;
     }
     
-    while(n < 150000){
-        string s = "";
-        int2str(i,s);
-        //cout<<s<<endl;
-        status = db->Put(WriteOptions(), s, s);
-        i++;
-        assert(status.ok());
-        n++;
+    // while(n < 150000){
+    //     string s = "";
+    //     int2str(i,s);
+    //     //cout<<s<<endl;
+    //     status = db->Put(WriteOptions(), s, s);
+    //     i++;
+    //     assert(status.ok());
+    //     n++;
 
-    }
+    // }
 
-    status = db->Get(ReadOptions(), "1", &res);
+    // status = db->Get(ReadOptions(), "1", &res);
     // string res;
     // status = db->Get(ReadOptions(), "JimZuoLin", &res);
     // assert(status.ok());
