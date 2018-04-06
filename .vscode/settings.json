@@ -28,6 +28,7 @@
         "utility": "cpp",
         "cwctype": "cpp",
         "fstream": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "algorithm": "cpp"
     }
 }

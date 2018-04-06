@@ -121,6 +121,21 @@ class VersionEdit {
     new_files_.push_back(std::make_pair(level, f));
   }
 
+  void AddFileOfReadSize(int level, uint64_t file,
+               uint64_t file_size,
+               const InternalKey &smallest,
+               const InternalKey &largest,
+               const int read_size)
+  {
+    FileMetaData f;
+    f.number = file;
+    f.file_size = file_size;
+    f.smallest = smallest;
+    f.largest = largest;
+    f.read_size = read_size;
+    new_files_.push_back(std::make_pair(level, f));
+  }
+
   // Delete the specified "file" from the specified "level".
   void DeleteFile(int level, uint64_t file) {
     deleted_files_.insert(std::make_pair(level, file));

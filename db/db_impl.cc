@@ -674,6 +674,7 @@ Status DBImpl::WriteLevel0Table(MemTable* mem, VersionEdit* edit,
   mutex_.AssertHeld();
   const uint64_t start_micros = env_->NowMicros();
   FileMetaData meta;
+  meta.read_size = mem->read_size;
   meta.number = versions_->NewFileNumber();
   pending_outputs_.insert(meta.number);
   Iterator* iter = mem->NewIterator();
@@ -704,8 +705,10 @@ Status DBImpl::WriteLevel0Table(MemTable* mem, VersionEdit* edit,
     if (base != NULL) {
       level = base->PickLevelForMemTableOutput(min_user_key, max_user_key);
     }
-    edit->AddFile(level, meta.number, meta.file_size,
-                  meta.smallest, meta.largest);
+    // edit->AddFile(level, meta.number, meta.file_size,
+    //               meta.smallest, meta.largest);
+    edit->AddFileOfReadSize(level, meta.number, meta.file_size,
+                   meta.smallest, meta.largest, meta.read_size);
   }
 
 /*
@@ -734,7 +737,7 @@ Status DBImpl::WriteLevel0Table(MemTable* mem, VersionEdit* edit,
 void DBImpl::CompactMemTable() {
   mutex_.AssertHeld();
   assert(imm_ != NULL);
-
+  std::cout<<"imm read Size: "<<imm_->read_size<<std::endl;
   // Save the contents of the memtable as a new Table
   VersionEdit edit;
   Version* base = versions_->current();
@@ -1818,6 +1821,7 @@ Status DBImpl::Get(const ReadOptions& options,
     // First look in the memtable, then in the immutable memtable (if any).
     LookupKey lkey(key, snapshot);
     if (mem->Get(lkey, value, &s)) {
+      std::cout<<mem->read_size<<std::endl;
       // Done
     } else if (imm != NULL && imm->Get(lkey, value, &s)) {
       // Done
@@ -2056,8 +2060,11 @@ Status DBImpl::MakeRoomForWrite(bool force) {
       logfile_number_ = new_log_number;
       log_ = new log::Writer(lfile);
       imm_ = mem_;
+      std::cout<<"imm read size:    "<<imm_->read_size<<std::endl;
       has_imm_.Release_Store(imm_);
       mem_ = new MemTable(internal_comparator_);
+      std::cout<<"mem read size:    "<<mem_->read_size<<std::endl;
+
       mem_->Ref();
       force = false;   // Do not force another compaction if have room
       MaybeScheduleCompaction();
@@ -2223,6 +2230,7 @@ Status DB::Open(const Options& options, const std::string& dbname,
       impl->logfile_number_ = new_log_number;
       impl->log_ = new log::Writer(lfile);
       impl->mem_ = new MemTable(impl->internal_comparator_);
+      std::cout<<"start mem"<<impl->mem_->read_size<<std::endl;
       impl->mem_->Ref();
     }
   }

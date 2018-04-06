@@ -21,7 +21,8 @@ static Slice GetLengthPrefixedSlice(const char* data) {
 MemTable::MemTable(const InternalKeyComparator& cmp)
     : comparator_(cmp),
       refs_(0),
-      table_(comparator_, &arena_) {
+      table_(comparator_, &arena_),
+      read_size(0) {
 }
 
 MemTable::~MemTable() {
@@ -133,6 +134,7 @@ bool MemTable::Get(const LookupKey& key, std::string* value, Status* s) {
         case kTypeValue: {
           Slice v = GetLengthPrefixedSlice(key_ptr + key_length);
           value->assign(v.data(), v.size());
+          read_size++;
           return true;
         }
         case kTypeDeletion:

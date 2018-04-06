@@ -23,6 +23,8 @@ class MemTable {
   // is zero and the caller must call Ref() at least once.
   explicit MemTable(const InternalKeyComparator& comparator);
 
+  int read_size;
+
   // Increase reference count.
   void Ref() { ++refs_; }
 
