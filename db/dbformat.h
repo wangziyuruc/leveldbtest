@@ -43,10 +43,20 @@ static const int kMaxMemCompactLevel = 0;
 static const int kReadBytesPeriod = 1048576;
 
 //whc add
-static const int kBufferCompactLevel  = 10;
+static const int kBufferCompactLevel  = 3;
 
 //whc add
 static const int kThresholdBufferNum  = 5;
+
+// wzy
+static const int kHighThresholdBufferNum = 15;
+
+// wzy
+static const int kmiddleThresholdBufferNum = 10;
+
+// wzy
+static const int klowThresholdBufferNum = 7;
+
 
 
 }  // namespace config

@@ -131,6 +131,9 @@ class Version {
  //whc add
    uint64_t sequence_;
 
+
+
+
  private:
   friend class Compaction;
   friend class VersionSet;
@@ -151,6 +154,7 @@ class Version {
   Version* next_;               // Next version in linked list
   Version* prev_;               // Previous version in linked list
   int refs_;                    // Number of live refs to this version
+
 
   // List of files per level
  //std::vector<FileMetaData*> files_[config::kNumLevels];
@@ -341,6 +345,14 @@ class VersionSet {
 
  //whc add
     bool buffer_compact_switch_;
+
+   //wzy   
+   int readModeWrite = 1;
+   // wzy
+   int writeNum = 0;
+
+   // wzy 
+   int readNum = 0;
    
 //whc change
     const InternalKeyComparator icmp_;

@@ -125,7 +125,9 @@ class DBImpl : public DB {
   Status DoCompactionWork(CompactionState* compact)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   //whc add
-  Status Dispatch(CompactionState* compact)
+  Status Dispatch(CompactionState* compact);
+  Status RemoveBuffer(CompactionState* compact);
+
   EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   Status BufferCompact(CompactionState* compact,int index)
   EXCLUSIVE_LOCKS_REQUIRED(mutex_);
