@@ -1128,18 +1128,37 @@ void DBImpl::BackgroundCompaction()
     //   std::cout << "background mode : " << versions_->readModeWrite << std::endl;
     // }
     // else 
-    if (BCJudge::IsBufferCompactLevel(compact->compaction->level_))
+    if (BCJudge::IsBufferCompactLevel(compact->compaction->level_) && versions_->readModeWrite <=4)
     {
       //mutex_.Unlock();
       //CopyToSSD(compact);
       //mutex_.Lock();
       //std::cout<<"Have copied to SSD"<<std::endl;
-      if(versions_->readModeWrite == 4){
-        status = RemoveBuffer(compact);
-      }else {
+      if (versions_->readModeWrite == 4)
+      {
+        bool flag = false;
+        for (int index = 0; index < compact->compaction->inputs_[0].size(); index++)
+        {
+
+          FileMetaData *f = compact->compaction->inputs_[0][index];
+          if(f->buffer->nodes.size() > 0){
+            flag = true;
+            break;
+          }
+        }
+        if (flag)
+        {
+          status = RemoveBuffer(compact);
+        }
+        else
+        {
+          status = DoCompactionWork(compact);
+        }
+      }
+      else
+      {
         status = Dispatch(compact);
       }
-      
     }
     else
     {

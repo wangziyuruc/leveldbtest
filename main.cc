@@ -39,7 +39,7 @@ int main()
     string str = "";
     // int2str(i, str);
     // status = db->Put(WriteOptions(), str, str);
-    while (n < 100000000)
+    while (n < 1000000000)
     {
         string s = "";
         int2str(i, s);

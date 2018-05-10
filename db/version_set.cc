@@ -1283,6 +1283,9 @@ public:
         case 3:
           kThresholdBufferNum = config::klowThresholdBufferNum;
           break;
+        case 4:
+          kThresholdBufferNum = config::kdeleteThresholdBufferNum;
+          break;
         }
         if (f->buffer->nodes.size() >= kThresholdBufferNum)
         {
@@ -1711,12 +1714,13 @@ void VersionSet::Finalize(Version *v)
     return;
   }
 
-  if (v->vset_->readModeWrite == 4 && !ExistFileWithoutBuffer(v->files_[config::kBufferCompactLevel]))
-  {
-    v->compaction_level_ = config::kBufferCompactLevel;
-    std::cout << "finalize going to delete buffer compact" << std::endl;
-    return;
-  }
+  // if (v->vset_->readModeWrite == 4 && !ExistFileWithoutBuffer(v->files_[config::kBufferCompactLevel]))
+  // {
+
+  //   v->compaction_level_ = config::kBufferCompactLevel;
+  //   std::cout << "finalize going to delete buffer compact" << std::endl;
+  //   return;
+  // }
 
   // Precomputed best level for next compaction
   int best_level = -1;

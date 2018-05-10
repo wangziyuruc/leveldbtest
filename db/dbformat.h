@@ -43,7 +43,7 @@ static const int kMaxMemCompactLevel = 0;
 static const int kReadBytesPeriod = 1048576;
 
 //whc add
-static const int kBufferCompactLevel  = 3;
+static int kBufferCompactLevel  = 3;
 
 //whc add
 static const int kThresholdBufferNum  = 5;
@@ -56,6 +56,9 @@ static const int kmiddleThresholdBufferNum = 10;
 
 // wzy
 static const int klowThresholdBufferNum = 7;
+
+//wzy
+static const int kdeleteThresholdBufferNum = 1;
 
 
 
